@@ -22,6 +22,15 @@ test('sandbox OTP authenticates a customer', async () => {
   token = response.body.token; assert.equal(response.body.user.role, 'CUSTOMER');
 });
 
+test('rejects invalid phone, OTP and protected routes without token', async () => {
+  const badPhone = await request(app).post('/api/auth/otp').send({ phone: '123' });
+  assert.equal(badPhone.status, 400); assert.equal(badPhone.body.error.code, 'INVALID_PHONE');
+  const badOtp = await request(app).post('/api/auth/verify').send({ phone: '0912345678', code: '000000' });
+  assert.equal(badOtp.status, 400); assert.equal(badOtp.body.error.code, 'INVALID_OTP');
+  const protectedResponse = await request(app).get('/api/orders');
+  assert.equal(protectedResponse.status, 401); assert.equal(protectedResponse.body.error.code, 'UNAUTHENTICATED');
+});
+
 test('creates idempotent order, pays it, and exposes timeline', async () => {
   const tomorrow = new Date(Date.now() + 48 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
   const body = { items: [{ variantId: 'p01-v18', quantity: 1, cakeMessage: 'Chúc mừng sinh nhật', accessoryIds: ['acc-candle'] }], fulfillment: 'PICKUP', receiveDate: tomorrow, receiveTime: '15:00' };
@@ -44,6 +53,44 @@ test('kitchen can follow state machine but cannot skip a state', async () => {
   await request(app).patch(`/api/admin/orders/${order.id}/status`).set('Authorization', `Bearer ${kitchenToken}`).send({ status: 'IN_PRODUCTION' }).expect(200);
   const ready = await request(app).patch(`/api/admin/orders/${order.id}/status`).set('Authorization', `Bearer ${kitchenToken}`).send({ status: 'READY' }).expect(200);
   assert.equal(ready.body.order.status, 'READY');
+});
+
+test('server validates personalization, delivery address and customer permissions', async () => {
+  const tomorrow = new Date(Date.now() + 48 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const longMessage = await request(app).post('/api/cart/validate').send({ items: [{ variantId: 'p01-v16', quantity: 1, cakeMessage: 'x'.repeat(41) }] });
+  assert.equal(longMessage.status, 400); assert.equal(longMessage.body.error.code, 'CAKE_MESSAGE_TOO_LONG');
+  const missingAddress = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).set('Idempotency-Key', 'delivery-address-test').send({ items: [{ variantId: 'p01-v16', quantity: 1 }], fulfillment: 'DELIVERY', receiveDate: tomorrow, receiveTime: '16:00' });
+  assert.equal(missingAddress.status, 400); assert.equal(missingAddress.body.error.code, 'ADDRESS_REQUIRED');
+  const adminRoute = await request(app).get('/api/admin/orders').set('Authorization', `Bearer ${token}`);
+  assert.equal(adminRoute.status, 403); assert.equal(adminRoute.body.error.code, 'FORBIDDEN_ROLE');
+});
+
+test('prevents cross-user order access and overbooking the final slot', async () => {
+  const date = new Date(Date.now() + 72 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const tokens = [];
+  for (let index = 1; index <= 6; index += 1) {
+    const phone = `092000000${index}`;
+    await request(app).post('/api/auth/otp').send({ phone }).expect(200);
+    const login = await request(app).post('/api/auth/verify').send({ phone, code: '123456' }).expect(200);
+    tokens.push(login.body.token);
+  }
+  const foreign = await request(app).get(`/api/orders/${order.id}`).set('Authorization', `Bearer ${tokens[0]}`);
+  assert.equal(foreign.status, 404);
+  const body = { items: [{ variantId: 'p01-v16', quantity: 1 }], fulfillment: 'PICKUP', receiveDate: date, receiveTime: '18:00' };
+  const attempts = await Promise.all(tokens.map((userToken, index) => request(app).post('/api/orders').set('Authorization', `Bearer ${userToken}`).set('Idempotency-Key', `slot-race-${index}-unique`).send(body)));
+  assert.equal(attempts.filter((response) => response.status === 201).length, 5);
+  const rejected = attempts.find((response) => response.status === 409);
+  assert.equal(rejected.body.error.code, 'SLOT_FULL');
+  const slots = await request(app).get(`/api/slots?date=${date}`).expect(200);
+  assert.equal(slots.body.slots.find((item) => item.startTime === '18:00').remaining, 0);
+});
+
+test('payment callback is idempotent', async () => {
+  const repeated = await request(app).post(`/api/payments/${payment.id}/simulate-success`).set('Authorization', `Bearer ${token}`).send().expect(200);
+  assert.equal(repeated.body.payment.status, 'SUCCESS');
+  assert.equal(repeated.body.order.status, 'READY');
+  const detail = await request(app).get(`/api/orders/${order.id}`).set('Authorization', `Bearer ${token}`).expect(200);
+  assert.equal(detail.body.timeline.filter((item) => item.to === 'CONFIRMED').length, 1);
 });
 
 test.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
