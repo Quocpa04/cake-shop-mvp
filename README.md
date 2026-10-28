@@ -21,14 +21,54 @@ packages/shared   API types, order statuses và quy tắc dùng chung
 docs              Phạm vi, API contract và quy trình Git
 ```
 
-## Bắt đầu
+## Cài đặt
 
 ```powershell
 Copy-Item .env.example .env
 npm.cmd install
 ```
 
-Các lệnh chạy sẽ được hoàn thiện cùng từng ứng dụng. Không commit file `.env`.
+Không commit file `.env`.
+
+## Chạy hệ thống
+
+Mở ba terminal tại thư mục gốc:
+
+```powershell
+npm.cmd run dev:api
+npm.cmd run dev:admin
+npm.cmd run dev:mobile
+```
+
+- API: `http://localhost:4000/api`
+- Admin/Kitchen: `http://localhost:3000`
+- Android Emulator gọi API bằng `http://10.0.2.2:4000/api`.
+
+| Vai trò | Số điện thoại | OTP |
+|---|---|---|
+| Customer | `0912345678` | `123456` |
+| Kitchen | `0900000002` | `123456` |
+| Admin | `0900000003` | `123456` |
+
+## Android Studio
+
+Mở thư mục `apps/mobile/android` bằng Android Studio, chờ Gradle Sync rồi chạy cấu hình `app`. API phải đang chạy trên cổng 4000. Tạo APK debug:
+
+```powershell
+cd apps\mobile\android
+.\gradlew.bat assembleDebug
+```
+
+APK nằm tại `apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`. Xem [docs/ANDROID_STUDIO.md](docs/ANDROID_STUDIO.md).
+
+## Kiểm tra
+
+```powershell
+npm.cmd test
+npm.cmd run build:admin
+cd apps\mobile
+npx.cmd expo export --platform android --output-dir dist-test --clear
+```
 
 ## Git
 

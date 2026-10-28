@@ -1,0 +1,7 @@
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Button } from '../components/UI';
+import { useApp } from '../context/AppContext';
+import { colors } from '../theme';
+export default function ProfileScreen() { const { user, logout } = useApp(); return <View style={s.screen}><View style={s.avatar}><Text style={s.avatarText}>{user?.name?.charAt(0) || 'K'}</Text></View><Text style={s.name}>{user?.name}</Text><Text style={s.phone}>{user?.phone}</Text><View style={s.card}><Text style={s.title}>Tài khoản Demo</Text><Text style={s.text}>Phiên bản MVP dùng OTP sandbox. Thông tin thanh toán không phải dữ liệu thật.</Text></View><Button variant="secondary" title="Đăng xuất" onPress={logout} /></View>; }
+const s = StyleSheet.create({ screen: { flex: 1, backgroundColor: colors.cream, padding: 22, alignItems: 'stretch' }, avatar: { alignSelf: 'center', width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 30 }, avatarText: { color: '#FFF', fontSize: 30, fontWeight: '900' }, name: { color: colors.text, textAlign: 'center', fontSize: 23, fontWeight: '900', marginTop: 15 }, phone: { color: colors.muted, textAlign: 'center', marginTop: 4 }, card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 15, marginVertical: 30 }, title: { color: colors.text, fontWeight: '900' }, text: { color: colors.muted, lineHeight: 20, marginTop: 7 } });

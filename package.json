@@ -10,6 +10,8 @@
     "dev:mobile": "npm run start --workspace @cake-shop/mobile",
     "dev:api": "npm run dev --workspace @cake-shop/api",
     "dev:admin": "npm run dev --workspace @cake-shop/admin-web",
+    "build:admin": "npm run build --workspace @cake-shop/admin-web",
+    "build:android": "npm run build:android --workspace @cake-shop/mobile",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },

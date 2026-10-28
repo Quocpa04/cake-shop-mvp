@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Sweet Cake",
+    "slug": "cake-shop-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {
+      "package": "com.quocpa04.cakeshop",
+      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF4F5"
+      }
+    },
+    "splash": {
+      "backgroundColor": "#FFF4F5",
+      "resizeMode": "contain"
+    }
+  }
+}

@@ -1,0 +1,3 @@
+export const colors = { primary: '#A33A4A', primaryDark: '#702633', soft: '#FFF0F2', cream: '#FFF9F5', surface: '#FFFFFF', text: '#2F2023', muted: '#806F73', border: '#EEDDE0', success: '#287A59', warning: '#B87616', danger: '#B32636' };
+export const navigationTheme = { dark: false, colors: { primary: colors.primary, background: colors.cream, card: colors.surface, text: colors.text, border: colors.border, notification: colors.danger }, fonts: { regular: { fontFamily: 'System', fontWeight: '400' }, medium: { fontFamily: 'System', fontWeight: '500' }, bold: { fontFamily: 'System', fontWeight: '700' }, heavy: { fontFamily: 'System', fontWeight: '900' } } };
+export const money = (value) => `${Math.round(Number(value || 0)).toLocaleString('vi-VN')}đ`;
