@@ -1,0 +1,19 @@
+{
+  "name": "cake-shop-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:mobile": "npm run start --workspace @cake-shop/mobile",
+    "dev:api": "npm run dev --workspace @cake-shop/api",
+    "dev:admin": "npm run dev --workspace @cake-shop/admin-web",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}
